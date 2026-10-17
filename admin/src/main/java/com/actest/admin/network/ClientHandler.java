@@ -37,8 +37,8 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+            out = new PrintWriter(new java.io.OutputStreamWriter(socket.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true);
 
             String message;
             while ((message = in.readLine()) != null) {
@@ -243,7 +243,7 @@ public class ClientHandler implements Runnable {
 
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 String examJson = mapper.writeValueAsString(exam);
-                String base64Exam = java.util.Base64.getEncoder().encodeToString(examJson.getBytes());
+                String base64Exam = java.util.Base64.getEncoder().encodeToString(examJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 sendMessage("START_EXAM:" + base64Exam);
                 System.out.println("Sent Exam " + exam.getId() + " to " + name);
             } catch (Exception e) {

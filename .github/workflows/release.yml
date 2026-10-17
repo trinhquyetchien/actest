@@ -1,0 +1,149 @@
+name: Build & Release (Linux & Windows)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release Tag (e.g. v1.0.0)"
+        required: false
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build Fat JARs
+        run: mvn clean package -DskipTests --batch-mode
+
+      - name: Prepare Linux Distribution Package
+        run: |
+          mkdir -p dist/actest-linux-x64
+          cp server/target/actest-server.jar dist/actest-linux-x64/
+          cp client/target/actest-client.jar dist/actest-linux-x64/
+          cp admin/target/actest-admin.jar dist/actest-linux-x64/
+          cp run-server.sh dist/actest-linux-x64/
+          cp run-client.sh dist/actest-linux-x64/
+          cp run-admin.sh dist/actest-linux-x64/
+          cp .env.example dist/actest-linux-x64/
+          cp README.md dist/actest-linux-x64/
+          chmod +x dist/actest-linux-x64/*.sh
+
+          cd dist
+          tar -czvf actest-linux-x64.tar.gz actest-linux-x64/
+          zip -r actest-linux-x64.zip actest-linux-x64/
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: actest-linux-x64
+          path: |
+            dist/actest-linux-x64.tar.gz
+            dist/actest-linux-x64.zip
+            server/target/actest-server.jar
+            client/target/actest-client.jar
+            admin/target/actest-admin.jar
+          retention-days: 7
+
+  build-windows:
+    name: Build Windows Distribution
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build Fat JARs
+        run: mvn clean package -DskipTests --batch-mode
+
+      - name: Prepare Windows Distribution Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/actest-windows-x64
+          Copy-Item server/target/actest-server.jar dist/actest-windows-x64/
+          Copy-Item client/target/actest-client.jar dist/actest-windows-x64/
+          Copy-Item admin/target/actest-admin.jar dist/actest-windows-x64/
+          Copy-Item run-server.bat dist/actest-windows-x64/
+          Copy-Item run-client.bat dist/actest-windows-x64/
+          Copy-Item run-admin.bat dist/actest-windows-x64/
+          Copy-Item .env.example dist/actest-windows-x64/
+          Copy-Item README.md dist/actest-windows-x64/
+
+          Compress-Archive -Path dist/actest-windows-x64 -DestinationPath dist/actest-windows-x64.zip -Force
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: actest-windows-x64
+          path: dist/actest-windows-x64.zip
+          retention-days: 7
+
+  create-release:
+    name: Publish GitHub Release
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: actest-linux-x64
+          path: release-assets/
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: actest-windows-x64
+          path: release-assets/
+
+      - name: Determine Release Tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: "ACTEST Release ${{ steps.release_tag.outputs.tag }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-assets/actest-linux-x64.tar.gz
+            release-assets/actest-linux-x64.zip
+            release-assets/actest-windows-x64.zip
+            release-assets/actest-server.jar
+            release-assets/actest-client.jar
+            release-assets/actest-admin.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

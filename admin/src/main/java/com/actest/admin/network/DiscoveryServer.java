@@ -40,7 +40,7 @@ public class DiscoveryServer implements Runnable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
 
-                String message = new String(packet.getData(), 0, packet.getLength());
+                String message = new String(packet.getData(), 0, packet.getLength(), java.nio.charset.StandardCharsets.UTF_8);
                 if ("ACTEST_DISCOVERY_REQUEST".equals(message)) {
                     System.out.println("Received discovery request from " + packet.getAddress());
                     sendResponse(packet.getAddress());
@@ -56,7 +56,7 @@ public class DiscoveryServer implements Runnable {
     private void sendResponse(InetAddress clientAddress) {
         try (DatagramSocket responseSocket = new DatagramSocket()) {
             String response = "ACTEST_SERVER:" + serverName;
-            byte[] responseData = response.getBytes();
+            byte[] responseData = response.getBytes(java.nio.charset.StandardCharsets.UTF_8);
             DatagramPacket responsePacket = new DatagramPacket(
                     responseData,
                     responseData.length,

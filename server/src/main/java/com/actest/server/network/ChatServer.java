@@ -69,8 +69,8 @@ public class ChatServer implements Runnable {
         @Override
         public void run() {
             try {
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+                out = new PrintWriter(new java.io.OutputStreamWriter(socket.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true);
 
                 String message;
                 while ((message = in.readLine()) != null) {
@@ -108,15 +108,13 @@ public class ChatServer implements Runnable {
                         msgObj.setSenderId(userId);
                         msgObj.setReceiverId(receiverId);
                         msgObj.setContent(content);
-                        // Timestamp is handled by DB or Model default, but let's check Message model if
-                        // needed.
-                        // Assuming DB handles default timestamp or Repository does.
                         messageRepository.save(msgObj);
 
                         // 2. Forward if online
                         Socket receiverSocket = onlineUsers.get(receiverId);
                         if (receiverSocket != null && !receiverSocket.isClosed()) {
-                            PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
+                            PrintWriter receiverOut = new PrintWriter(
+                                    new java.io.OutputStreamWriter(receiverSocket.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true);
                             // Format: MESSAGE_RECEIVED:<senderId>:<content>
                             receiverOut.println("MESSAGE_RECEIVED:" + userId + ":" + content);
                         }

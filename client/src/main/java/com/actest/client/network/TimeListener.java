@@ -30,7 +30,7 @@ public class TimeListener implements Runnable {
             while (running) {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
-                String received = new String(packet.getData(), 0, packet.getLength());
+                String received = new String(packet.getData(), 0, packet.getLength(), java.nio.charset.StandardCharsets.UTF_8);
 
                 if (received.startsWith("TIME:")) {
                     // Format: TIME:examId:seconds or TIME:examId:FINISHED

@@ -53,28 +53,15 @@ public class ChatHandler {
             Message message = objectMapper.readValue(is, Message.class);
 
             if (!friendRepository.areFriends(message.getSenderId(), message.getReceiverId())) {
-                String response = "You are not friends with this user.";
-                exchange.sendResponseHeaders(403, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes(StandardCharsets.UTF_8));
-                }
+                sendResponse(exchange, 403, "You are not friends with this user.", "text/plain; charset=UTF-8");
                 return;
             }
 
             messageRepository.save(message);
-
-            String response = "Message sent";
-            exchange.sendResponseHeaders(200, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            sendResponse(exchange, 200, "Message sent", "text/plain; charset=UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
-            String response = "Error sending message";
-            exchange.sendResponseHeaders(500, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            sendResponse(exchange, 500, "Error sending message", "text/plain; charset=UTF-8");
         }
     }
 
@@ -89,52 +76,30 @@ public class ChatHandler {
             List<Message> messages = messageRepository.getMessagesBetween(userId1, userId2);
 
             String response = objectMapper.writeValueAsString(messages);
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            sendResponse(exchange, 200, response, "application/json; charset=UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
-            String response = "Error fetching messages";
-            exchange.sendResponseHeaders(500, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            sendResponse(exchange, 500, "Error fetching messages", "text/plain; charset=UTF-8");
         }
     }
 
     private void handleGetUsers(HttpExchange exchange) throws IOException {
         try {
-            // In a real app, we might filter users or exclude self.
-            // For now, return all users so admin can choose who to chat with.
-            // We need a method in UserRepository to get all users.
-            // Let's assume we add it or use a raw query here if needed, but better to add
-            // to repo.
-            // For now, let's just return a hardcoded list or fetch from DB if we add the
-            // method.
-            // I'll add getAllUsers to UserRepository in the next step.
-
-            // Placeholder response until repo update
-            String response = "[]";
-
-            // Actually, let's try to fetch if method exists, or just fail for now and I'll
-            // fix it.
             List<User> users = userRepository.getAllUsers();
-            response = objectMapper.writeValueAsString(users);
-
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            String response = objectMapper.writeValueAsString(users);
+            sendResponse(exchange, 200, response, "application/json; charset=UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
-            String response = "Error fetching users";
-            exchange.sendResponseHeaders(500, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            sendResponse(exchange, 500, "Error fetching users", "text/plain; charset=UTF-8");
+        }
+    }
+
+    private void sendResponse(HttpExchange exchange, int statusCode, String response, String contentType) throws IOException {
+        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", contentType);
+        exchange.sendResponseHeaders(statusCode, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
         }
     }
 

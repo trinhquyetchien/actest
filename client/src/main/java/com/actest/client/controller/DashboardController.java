@@ -20,7 +20,7 @@ public class DashboardController {
             client.setListener(message -> {
                 if (message.startsWith("START_EXAM:")) {
                     String base64Exam = message.substring(11);
-                    String examJson = new String(java.util.Base64.getDecoder().decode(base64Exam));
+                    String examJson = new String(java.util.Base64.getDecoder().decode(base64Exam), java.nio.charset.StandardCharsets.UTF_8);
                     try {
                         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                         com.actest.client.model.Exam exam = mapper.readValue(examJson,
@@ -37,8 +37,8 @@ public class DashboardController {
                     if (splitIndex != -1) {
                         String base64Exam = content.substring(0, splitIndex);
                         String base64Answers = content.substring(splitIndex + 3);
-                        String examJson = new String(java.util.Base64.getDecoder().decode(base64Exam));
-                        String answersJson = new String(java.util.Base64.getDecoder().decode(base64Answers));
+                        String examJson = new String(java.util.Base64.getDecoder().decode(base64Exam), java.nio.charset.StandardCharsets.UTF_8);
+                        String answersJson = new String(java.util.Base64.getDecoder().decode(base64Answers), java.nio.charset.StandardCharsets.UTF_8);
 
                         try {
                             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

@@ -23,7 +23,7 @@ public class DiscoveryClient {
 
             // Send discovery request
             String message = "ACTEST_DISCOVERY_REQUEST";
-            byte[] buffer = message.getBytes();
+            byte[] buffer = message.getBytes(java.nio.charset.StandardCharsets.UTF_8);
             DatagramPacket packet = new DatagramPacket(
                     buffer,
                     buffer.length,
@@ -40,7 +40,7 @@ public class DiscoveryClient {
                     DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
                     socket.receive(responsePacket);
 
-                    String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
+                    String response = new String(responsePacket.getData(), 0, responsePacket.getLength(), java.nio.charset.StandardCharsets.UTF_8);
                     if (response.startsWith("ACTEST_SERVER:")) {
                         String serverName = response.substring("ACTEST_SERVER:".length());
                         // Just add the name for checking uniqueness

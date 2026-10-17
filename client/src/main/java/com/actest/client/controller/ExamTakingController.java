@@ -338,7 +338,7 @@ public class ExamTakingController {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             String answersJson = mapper.writeValueAsString(answers);
-            String base64Answers = java.util.Base64.getEncoder().encodeToString(answersJson.getBytes());
+            String base64Answers = java.util.Base64.getEncoder().encodeToString(answersJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
             com.actest.client.network.Client client = com.actest.client.service.AuthService.getTcpClient();
             if (client != null) {

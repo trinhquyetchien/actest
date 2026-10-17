@@ -45,11 +45,7 @@ public class ExamHandler {
     private void handleGetAllExams(HttpExchange exchange) throws IOException {
         List<Exam> exams = examRepository.getAllExams();
         String response = objectMapper.writeValueAsString(exams);
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(200, response.length());
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes(StandardCharsets.UTF_8));
-        }
+        sendResponse(exchange, 200, response, "application/json; charset=UTF-8");
     }
 
     private void handleGetExamById(HttpExchange exchange) throws IOException {
@@ -58,11 +54,7 @@ public class ExamHandler {
         Exam exam = examRepository.getExamById(id);
         if (exam != null) {
             String response = objectMapper.writeValueAsString(exam);
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
+            sendResponse(exchange, 200, response, "application/json; charset=UTF-8");
         } else {
             exchange.sendResponseHeaders(404, -1);
         }
@@ -70,16 +62,11 @@ public class ExamHandler {
 
     private void handleGetQuestionsByExamId(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
-        // Extract ID from /api/exams/{id}/questions
         String[] parts = path.split("/");
         int id = Integer.parseInt(parts[3]);
         List<Question> questions = questionRepository.getQuestionsByExamId(id);
         String response = objectMapper.writeValueAsString(questions);
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(200, response.length());
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes(StandardCharsets.UTF_8));
-        }
+        sendResponse(exchange, 200, response, "application/json; charset=UTF-8");
     }
 
     private void handleUploadExam(HttpExchange exchange) throws IOException {
@@ -87,26 +74,8 @@ public class ExamHandler {
             InputStream is = exchange.getRequestBody();
             String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
 
-            // Expecting JSON: { "exam": {...}, "questions": [...] }
-            // Or just Exam object if it contains questions list?
-            // Admin Exam model has List<Question> questions.
-            // Server Exam model might NOT have questions list if it's just a POJO for
-            // 'exams' table.
-            // Let's check Server Exam model.
-            // Assuming Server Exam model matches Admin Exam model structure for JSON.
-            // If not, we might need a DTO.
-
-            // Let's assume we receive the Admin's Exam object which includes questions.
-            // But Server's Exam model might be different.
-            // I'll assume for now we can map it to Server's Exam model,
-            // but we need to extract questions separately if Server Exam doesn't have them.
-
-            // Let's check Server Exam model first.
-            // For now, I'll write a generic handler and fix if needed.
-
             UploadRequest request = objectMapper.readValue(body, UploadRequest.class);
 
-            // Get creator ID from email
             int creatorId = -1;
             if (request.getEmail() != null) {
                 com.actest.server.repository.UserRepository userRepository = new com.actest.server.repository.UserRepository();
@@ -114,11 +83,7 @@ public class ExamHandler {
             }
 
             if (creatorId == -1) {
-                String response = "User not found for email: " + request.getEmail();
-                exchange.sendResponseHeaders(400, response.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
+                sendResponse(exchange, 400, "User not found for email: " + request.getEmail(), "text/plain; charset=UTF-8");
                 return;
             }
 
@@ -130,25 +95,22 @@ public class ExamHandler {
                 if (request.getQuestions() != null && !request.getQuestions().isEmpty()) {
                     questionRepository.addQuestionsToExam(examId, request.getQuestions());
                 }
-                String response = "Exam uploaded successfully";
-                exchange.sendResponseHeaders(200, response.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
+                sendResponse(exchange, 200, "Exam uploaded successfully", "text/plain; charset=UTF-8");
             } else {
-                String response = "Failed to create exam";
-                exchange.sendResponseHeaders(500, response.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
+                sendResponse(exchange, 500, "Failed to create exam", "text/plain; charset=UTF-8");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            String response = "Error processing request: " + e.getMessage();
-            exchange.sendResponseHeaders(400, response.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
+            sendResponse(exchange, 400, "Error processing request: " + e.getMessage(), "text/plain; charset=UTF-8");
+        }
+    }
+
+    private void sendResponse(HttpExchange exchange, int statusCode, String response, String contentType) throws IOException {
+        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", contentType);
+        exchange.sendResponseHeaders(statusCode, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
         }
     }
 

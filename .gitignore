@@ -1,0 +1,30 @@
+# Compiled class files & build artifacts
+target/
+**/target/
+*.class
+**/*.class
+
+# Log files
+*.log
+**/*.log
+
+# Local databases
+*.db
+*.db-journal
+actest_admin.db
+
+# Anti-cheat violation screenshots captured during exams
+violations/
+**/violations/
+
+# IDE and editor settings
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS generated files
+.DS_Store
+Thumbs.db

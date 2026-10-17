@@ -28,7 +28,7 @@ public class DatabaseConnection {
                     System.err.println("schema.sql not found!");
                     return;
                 }
-                sql = new BufferedReader(new InputStreamReader(inputStream))
+                sql = new BufferedReader(new InputStreamReader(inputStream, java.nio.charset.StandardCharsets.UTF_8))
                         .lines().collect(Collectors.joining("\n"));
             }
 

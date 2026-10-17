@@ -10,9 +10,12 @@ import java.sql.Statement;
 import java.util.stream.Collectors;
 
 public class DatabaseConnection {
-    private static final String URL = "jdbc:postgresql://localhost:5432/actest";
-    private static final String USER = "chien";
-    private static final String PASSWORD = "totolink";
+    private static final String URL = System.getenv().getOrDefault("DB_URL",
+            System.getProperty("db.url", "jdbc:postgresql://localhost:5432/actest"));
+    private static final String USER = System.getenv().getOrDefault("DB_USER",
+            System.getProperty("db.user", "chien"));
+    private static final String PASSWORD = System.getenv().getOrDefault("DB_PASSWORD",
+            System.getProperty("db.password", "totolink"));
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
@@ -29,7 +32,7 @@ public class DatabaseConnection {
             }
 
             String sql;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, java.nio.charset.StandardCharsets.UTF_8))) {
                 sql = reader.lines().collect(Collectors.joining("\n"));
             }
 

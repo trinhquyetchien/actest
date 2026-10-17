@@ -98,7 +98,7 @@ public class TimeBroadcastServer {
         try {
             if (socket == null || socket.isClosed())
                 return;
-            byte[] buf = msg.getBytes();
+            byte[] buf = msg.getBytes(java.nio.charset.StandardCharsets.UTF_8);
             InetAddress address = InetAddress.getByName("255.255.255.255");
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
             socket.send(packet);

@@ -6,9 +6,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import com.actest.admin.config.Config;
+
 public class ChatClient {
-    private static final String SERVER_HOST = "localhost"; // Or from config
-    private static final int SERVER_PORT = 9001;
+    private static final String SERVER_HOST = Config.get("SERVER_HOST", "127.0.0.1");
+    private static final int SERVER_PORT = Config.getInt("CHAT_PORT", 9001);
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
@@ -23,8 +25,8 @@ public class ChatClient {
         new Thread(() -> {
             try {
                 socket = new Socket(SERVER_HOST, SERVER_PORT);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+                out = new PrintWriter(new java.io.OutputStreamWriter(socket.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8), true);
                 connected = true;
 
                 // Send Login
